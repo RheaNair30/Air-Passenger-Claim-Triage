@@ -1,0 +1,635 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Air Passenger Claim Triage</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 30px;
+    background: #f3f5f9;
+    color: #202b3c;
+    font-family: Arial, sans-serif;
+}
+
+main {
+    max-width: 850px;
+    margin: auto;
+    background: white;
+    padding: 28px;
+    border-radius: 12px;
+    box-shadow: 0 3px 15px #00000012;
+}
+
+h1 {
+    margin-top: 0;
+    color: #183b70;
+}
+
+h2 {
+    font-size: 18px;
+    margin-top: 25px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+label {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+input, select, textarea {
+    width: 100%;
+    margin-top: 6px;
+    padding: 10px;
+    border: 1px solid #ccd3df;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+textarea {
+    min-height: 85px;
+    resize: vertical;
+}
+
+button {
+    margin-top: 22px;
+    padding: 13px 20px;
+    width: 100%;
+    background: #245da8;
+    color: white;
+    border: 0;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+
+#status {
+    margin-top: 20px;
+    font-weight: bold;
+}
+
+#result {
+    margin-top: 20px;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.result-card {
+    background: #f3f6fa;
+    padding: 18px;
+    border-radius: 9px;
+    margin-bottom: 14px;
+}
+
+.result-card h2 {
+    margin-top: 0;
+    color: #183b70;
+}
+
+.result-meta {
+    color: #64748b;
+    font-size: 12px;
+    margin-bottom: 12px;
+}
+
+.decision {
+    background: white;
+    border: 1px solid #dce3ed;
+    border-radius: 7px;
+    padding: 14px;
+    margin-top: 12px;
+}
+
+.decision h3 {
+    margin: 0 0 10px;
+    font-size: 15px;
+    text-transform: capitalize;
+}
+
+.payable {
+    color: #16804a;
+    font-weight: bold;
+}
+
+.not-payable {
+    color: #b45309;
+    font-weight: bold;
+}
+
+.escalate {
+    color: #b42318;
+    font-weight: bold;
+}
+
+.citation {
+    border-left: 3px solid #245da8;
+    padding: 8px 12px;
+    margin-top: 8px;
+    background: white;
+    font-size: 12px;
+}
+
+@media(max-width:600px) {
+    body {
+        padding: 12px;
+    }
+
+    main {
+        padding: 18px;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+<main>
+
+<h1>Air Passenger Claim Triage</h1>
+<p>Submit a passenger claim and view its evidence-based assessment.</p>
+
+<form id="claimForm">
+
+<h2>Passenger details</h2>
+
+<div class="grid">
+<label>Passenger name
+<input id="name" value="Test Passenger" required>
+</label>
+
+<label>Email
+<input id="email" type="email" value="test@example.com">
+</label>
+
+<label>Phone
+<input id="phone" value="9999999999">
+</label>
+
+<label>PNR
+<input id="pnr" value="ABC123" maxlength="6" required>
+</label>
+</div>
+
+<h2>Flight details</h2>
+
+<div class="grid">
+<label>Airline IATA code
+<input id="airline" value="AI" maxlength="2" required>
+</label>
+
+<label>Flight number
+<input id="flight" value="101" required>
+</label>
+
+<label>Origin
+<input id="origin" value="BLR" maxlength="3" required>
+</label>
+
+<label>Destination
+<input id="destination" value="DEL" maxlength="3" required>
+</label>
+
+<label>Scheduled departure
+<input id="departure" type="datetime-local" value="2026-11-20T10:00" required>
+</label>
+
+<label>Scheduled arrival
+<input id="arrival" type="datetime-local" value="2026-11-20T12:45">
+</label>
+
+<label>Flight sector
+<select id="sector">
+<option value="domestic">Domestic</option>
+<option value="international">International</option>
+<option value="unknown">Unknown</option>
+</select>
+</label>
+
+<label>Stated block time (minutes)
+<input id="blocktime" type="number" value="165">
+</label>
+</div>
+
+<h2>Disruption details</h2>
+
+<div class="grid">
+<label>Disruption type
+<select id="type">
+<option value="cancellation">Cancellation</option>
+<option value="delay">Delay</option>
+<option value="denied_boarding">Denied boarding</option>
+<option value="downgrading">Downgrading</option>
+<option value="unspecified">Unspecified</option>
+</select>
+</label>
+
+<label>Notice before departure (hours)
+<input id="notice" type="number" min="0" step="0.5" value="1.5">
+</label>
+
+<label>Notified at
+<input id="notified" type="datetime-local" value="2026-11-20T08:30">
+</label>
+
+<label>Stated cause
+<select id="cause">
+<option value="other">Other</option>
+<option value="weather">Weather</option>
+<option value="atc">ATC</option>
+<option value="technical">Technical</option>
+<option value="security">Security</option>
+<option value="strike">Strike</option>
+<option value="crew">Crew</option>
+<option value="unknown">Unknown</option>
+</select>
+</label>
+
+<label>Reported at airport?
+<select id="airport">
+<option value="true">Yes</option>
+<option value="false">No</option>
+</select>
+</label>
+
+<label>Alternate flight offered?
+<select id="offered">
+<option value="true">Yes</option>
+<option value="false">No</option>
+</select>
+</label>
+
+<label>Alternate flight accepted?
+<select id="accepted">
+<option value="true">Yes</option>
+<option value="false">No</option>
+</select>
+</label>
+
+<label>Alternate departure
+<input id="alternate" type="datetime-local" value="2026-11-20T14:00">
+</label>
+</div>
+
+<h2>Claim information</h2>
+
+<label>Claim narrative
+<textarea id="narrative" required>My flight was cancelled with only 90 minutes notice. I was at the airport and accepted an alternate flight departing 4 hours after my original scheduled departure. I am claiming the applicable compensation and passenger facilities.</textarea>
+</label>
+
+<div class="grid">
+<label>Basic fare (INR)
+<input id="basic" type="number" value="5000" min="0">
+</label>
+
+<label>Fuel charge (INR)
+<input id="fuel" type="number" value="1000" min="0">
+</label>
+
+<label>Total ticket fare (INR)
+<input id="total" type="number" value="6000" min="0">
+</label>
+
+<label>Booking contact provided?
+<select id="contact">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+<option value="unknown">Unknown</option>
+</select>
+</label>
+</div>
+
+<button id="submitButton" type="submit">Submit claim</button>
+
+</form>
+
+<div id="status"></div>
+<div id="result"></div>
+
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const value = id => $(id).value;
+
+function dateValue(id) {
+    const v = value(id);
+    return v ? new Date(v).toISOString() : null;
+}
+
+function selectedBool(id) {
+    return value(id) === "true";
+}
+
+function addText(parent, tag, text, className = "") {
+    const element = document.createElement(tag);
+    element.textContent = text ?? "Not available";
+
+    if (className) {
+        element.className = className;
+    }
+
+    parent.appendChild(element);
+    return element;
+}
+
+function displayResult(result, runId) {
+    const box = $("result");
+    box.replaceChildren();
+
+    const verified = result.verified_result || {};
+    const heads = verified.entitlement_heads || [];
+
+    const overview = document.createElement("div");
+    overview.className = "result-card";
+
+    addText(overview, "h2", "Claim assessment");
+    addText(overview, "p", "Run ID: " + runId, "result-meta");
+    addText(
+        overview,
+        "p",
+        "Verification status: " + (verified.status || "Unavailable")
+    );
+
+    if (result.processing_time_seconds !== undefined) {
+        addText(
+            overview,
+            "p",
+            "Processing time: " + result.processing_time_seconds + " seconds"
+        );
+    }
+
+    box.appendChild(overview);
+
+    if (result.investigation_summary) {
+        const investigation = document.createElement("div");
+        investigation.className = "result-card";
+
+        addText(investigation, "h2", "Investigation summary");
+        let summary = result.investigation_summary;
+
+        if (Array.isArray(summary)) {
+            summary = summary
+                .map(item => typeof item === "string" ? item : item.text || "")
+                .filter(Boolean)
+                .join("\n\n");
+        }
+
+        if (typeof summary === "object" && summary !== null) {
+            summary = summary.text || JSON.stringify(summary);
+        }
+
+        summary = summary
+            .replace(/^#{1,6}\s*/gm, "")
+            .replace(/\*\*(.*?)\*\*/g, "$1")
+            .replace(/\n{3,}/g, "\n\n")
+            .trim();
+
+        addText(investigation, "p", summary);
+
+        box.appendChild(investigation);
+    }
+
+    const decisions = document.createElement("div");
+    decisions.className = "result-card";
+
+    addText(decisions, "h2", "Entitlement decisions");
+
+    if (!heads.length) {
+        addText(
+            decisions,
+            "p",
+            verified.reason || result.reason ||
+            "No entitlement decisions were returned."
+        );
+    }
+
+    heads.forEach(head => {
+        const card = document.createElement("div");
+        card.className = "decision";
+
+        addText(
+            card,
+            "h3",
+            (head.head || "Entitlement").replaceAll("_", " ")
+        );
+
+        const decision = head.decision || "Not available";
+        let decisionClass = "";
+
+        if (decision === "payable") {
+            decisionClass = "payable";
+        } else if (decision === "not_payable") {
+            decisionClass = "not-payable";
+        } else if (decision === "escalate") {
+            decisionClass = "escalate";
+        }
+
+        addText(
+            card,
+            "p",
+            "Decision: " + decision.replaceAll("_", " "),
+            decisionClass
+        );
+
+        addText(
+            card,
+            "p",
+            "Citation verification: " +
+            (head.verified === true ? "Verified" : "Not verified")
+        );
+
+        if (head.basis) {
+            addText(card, "p", "Basis: " + head.basis);
+        }
+
+        (head.citations || []).forEach(citation => {
+            const citationBox = document.createElement("div");
+            citationBox.className = "citation";
+
+            addText(citationBox, "strong", citation.provision);
+
+            addText(
+                citationBox,
+                "p",
+                "Source: " + (citation.source_file || "Not specified")
+            );
+
+            addText(
+                citationBox,
+                "p",
+                "Page: " + (citation.page ?? "Not specified")
+            );
+
+            card.appendChild(citationBox);
+        });
+
+        (head.unsupported_citations || []).forEach(provision => {
+            addText(
+                card,
+                "p",
+                "Unverified citation: " + provision,
+                "escalate"
+            );
+        });
+
+        decisions.appendChild(card);
+    });
+
+    box.appendChild(decisions);
+
+    if (
+        verified.status === "escalation_required" ||
+        result.status === "escalation_required"
+    ) {
+        const escalation = document.createElement("div");
+        escalation.className = "result-card";
+
+        addText(escalation, "h2", "Human review required");
+
+        addText(
+            escalation,
+            "p",
+            verified.reason || result.reason ||
+            "The claim requires further review."
+        );
+
+        box.appendChild(escalation);
+    }
+}
+
+$("claimForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const button = $("submitButton");
+    const statusBox = $("status");
+    const resultBox = $("result");
+
+    button.disabled = true;
+    statusBox.textContent = "Submitting claim...";
+    resultBox.replaceChildren();
+
+    const payload = {
+        client_reference: "WEB-" + Date.now(),
+
+        narrative: value("narrative"),
+
+        passenger: {
+            name: value("name"),
+            email: value("email") || null,
+            phone: value("phone") || null
+        },
+
+        booking_contact_provided: value("contact"),
+        pnr: value("pnr"),
+
+        flight: {
+            airline_iata: value("airline"),
+            number: value("flight"),
+            origin: value("origin"),
+            destination: value("destination"),
+            scheduled_departure: dateValue("departure"),
+            scheduled_arrival: dateValue("arrival"),
+            sector: value("sector"),
+            block_time_minutes_stated: Number(value("blocktime")) || null
+        },
+
+        disruption: {
+            claimed_type: value("type"),
+            notified_at: dateValue("notified"),
+            notice_hours_before_departure: Number(value("notice")),
+            reported_at_airport: selectedBool("airport"),
+            alternate_flight_offered: selectedBool("offered"),
+            alternate_flight_accepted: selectedBool("accepted"),
+            alternate_departure: dateValue("alternate"),
+            stated_cause: value("cause")
+        },
+
+        fare: {
+            basic_fare_inr: Number(value("basic")),
+            fuel_charge_inr: Number(value("fuel")),
+            ticket_total_inr: Number(value("total"))
+        }
+    };
+
+    try {
+        const response = await fetch("/claims", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const submitted = await response.json();
+
+        if (!response.ok) {
+            throw new Error(JSON.stringify(submitted));
+        }
+
+        const runId = submitted.run_id;
+
+        statusBox.textContent = "Claim submitted. Processing...";
+
+        for (let i = 0; i < 90; i++) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const check = await fetch("/claims/" + runId);
+            const data = await check.json();
+
+            if (!check.ok) {
+                throw new Error(JSON.stringify(data));
+            }
+
+            if (data.status === "completed") {
+                statusBox.textContent = "Claim processing completed.";
+
+                displayResult(data.result || {}, runId);
+                return;
+            }
+
+            if (data.status === "failed") {
+                throw new Error(
+                    JSON.stringify(data.result || "Claim processing failed")
+                );
+            }
+
+            statusBox.textContent =
+                "Claim is " + data.status + ". Checking again...";
+        }
+
+        statusBox.textContent =
+            "Processing is taking longer than expected.";
+
+        addText(resultBox, "p", "Run ID: " + runId);
+
+    } catch (error) {
+        statusBox.textContent = "Error: " + error.message;
+    } finally {
+        button.disabled = false;
+    }
+});
+</script>
+
+</body>
+</html>

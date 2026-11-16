@@ -1,0 +1,43 @@
+{
+  "total": 6,
+  "passed": 6,
+  "failed": 0,
+  "results": [
+    {
+      "id": "E01",
+      "scenario": "Mandatory cancellation workflow",
+      "passed": true,
+      "details": "Workflow status: verified; compensation: not_payable; meals: payable"
+    },
+    {
+      "id": "E02",
+      "scenario": "Missing passenger name",
+      "passed": true,
+      "details": "Missing passenger name rejected"
+    },
+    {
+      "id": "E03",
+      "scenario": "Missing PNR",
+      "passed": true,
+      "details": "Missing PNR rejected"
+    },
+    {
+      "id": "E04",
+      "scenario": "Unspecified disruption",
+      "passed": true,
+      "details": "Unspecified disruption accepted by schema"
+    },
+    {
+      "id": "B2",
+      "scenario": "Missing datetime timezone",
+      "passed": true,
+      "details": "Datetime without timezone rejected"
+    },
+    {
+      "id": "B4",
+      "scenario": "Invalid fare total",
+      "passed": true,
+      "details": "Invalid fare rejected"
+    }
+  ]
+}
